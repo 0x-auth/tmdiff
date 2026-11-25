@@ -1,25 +1,51 @@
-"""CLI entry point for tmdiff."""
+"""Unified CLI for tmdiff: streaming sqz noise collapse + ID anchoring + causal diff."""
 import argparse
 import json
+import sys
 from tmdiff.timeline import anchor_event
 from tmdiff.fingerprint import structural_hash
 from tmdiff.causal import CausalOrganism
+from tmdiff.squeeze import NlmsHuberFilter
 from tmdiff.transport import pack_events
 
 
 def main():
-    parser = argparse.ArgumentParser(prog="tmdiff", description="Causal & structural archive diff")
-    parser.add_argument("input", help="Path to JSONL file of {platform, id, text} events")
+    parser = argparse.ArgumentParser(
+        prog="tmdiff",
+        description="Streaming harmonic noise filter + ID timeline anchoring + causal archive diff.",
+    )
+    parser.add_argument("input", nargs="?", default="-", help="JSONL or raw log file (default: stdin)")
+    parser.add_argument("--mode", choices=["auto", "squeeze", "causal"], default="auto")
     parser.add_argument("--pack", help="Optional path to write round-trip verified .utf8.json envelope")
-    parser.add_argument("--links", type=int, default=8, help="Number of symmetric causal links to display")
+    parser.add_argument("--links", type=int, default=8, help="Number of symmetric causal links to show")
     args = parser.parse_args()
 
-    raw_events = []
-    with open(args.input, "r", encoding="utf-8") as f:
-        for line in f:
-            if line.strip():
-                raw_events.append(json.loads(line))
+    fh = sys.stdin if args.input == "-" else open(args.input, "r", encoding="utf-8")
+    raw_lines = [line.rstrip("\r\n") for line in fh if line.strip()]
+    if fh is not sys.stdin:
+        fh.close()
 
+    is_jsonl = raw_lines and next(iter(raw_lines)).lstrip().startswith("{")
+    mode = ("causal" if is_jsonl else "squeeze") if args.mode == "auto" else args.mode
+
+    if mode == "squeeze":
+        flt = NlmsHuberFilter()
+        events = flt.squeeze_stream(raw_lines)
+        for ev in events:
+            print(ev["text"])
+        s = flt.stats
+        pct = (1.0 - sum(len(e["text"]) + 1 for e in events) / max(1, s["in_b"])) * 100.0
+        sys.stderr.write(
+            f"\n[tmdiff squeeze] {s['in_l']} lines -> {len(events)} events "
+            f"({max(0.0, pct):.2f}% noise collapsed | {s['bursts']} bursts | {s['secrets']} secrets scrubbed)\n"
+        )
+        if args.pack:
+            env = pack_events(events, source=args.input)
+            with open(args.pack, "w", encoding="utf-8") as f:
+                json.dump(env, f, ensure_ascii=False, indent=2)
+        return
+
+    raw_events = [json.loads(line) for line in raw_lines]
     enriched = []
     seen_hashes = set()
     for ev in raw_events:
@@ -30,7 +56,6 @@ def main():
         seen_hashes.add(h)
         enriched.append(e)
 
-    # Sort anchored events chronologically while preserving relative order of unanchored ones
     enriched.sort(key=lambda x: (0, x["timestamp"]) if x["anchored"] else (1, ""))
 
     org = CausalOrganism()
