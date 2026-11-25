@@ -1,0 +1,14 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tmdiff"
+version = "0.1.0"
+description = "Causal & structural archaeology across multi-platform exports — zero LLMs, pure arithmetic."
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = ["numpy>=1.24"]
+
+[project.scripts]
+tmdiff = "tmdiff.cli:main"
