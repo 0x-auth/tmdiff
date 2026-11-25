@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tmdiff"
-version = "0.2.0"
+version = "0.2.1"
 description = "git diff for chat exports and logs — 100% offline, zero LLMs, pure arithmetic."
 readme = "README.md"
 license = { text = "MIT" }

@@ -7,7 +7,7 @@
 ## Pipeline
 
 1. **Streaming Harmonic Squeeze & Secret Scrub (`squeeze.py`)**: 4096-dim FNV-1a NLMS-Huber filter that collapses repetitive log lines in `O(1)` memory while redacting API keys (`sk-`, `ghp_`, `AKIA`, JWTs).
-2. **True Timeline Anchoring (`timeline.py`)**: Extracts microsecond birth timestamps from platform IDs (Slack, Discord/X snowflakes, Gmail, UUIDv1/v7) and flags undecodable IDs as `UNANCHORED`.
+2. **True Timeline Anchoring (`timeline.py`)**: Extracts microsecond birth timestamps directly from platform IDs **and full URLs** (Slack permalinks, X/Twitter status links, Discord message URLs, Gmail hex IDs, UUIDv1/v7) and flags undecodable IDs as `UNANCHORED`.
 3. **Structural Fingerprinting (`fingerprint.py`)**: Strips variable literals, URLs, and hex hashes while binding negations (`not converge` -> `¬converge`).
 4. **Bidirectional Causal Turning Points (`causal.py`)**: Forward and retrocausal error learning (`√(F · Bᵀ)`) isolates high-surprise pivots and symmetric concept links.
 5. **Lossless Transport & Local HTTP Proxy (`transport.py`, `server.py`)**: Packs verified `.utf8.json` envelopes or serves `/squeeze` and `/causal` over HTTP (`tmdiff serve 8787`).
