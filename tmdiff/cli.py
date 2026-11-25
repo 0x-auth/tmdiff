@@ -7,6 +7,7 @@ from tmdiff.fingerprint import structural_hash
 from tmdiff.causal import CausalOrganism
 from tmdiff.squeeze import NlmsHuberFilter
 from tmdiff.transport import pack_events
+from tmdiff.server import run_server
 
 
 def main():
@@ -14,11 +15,16 @@ def main():
         prog="tmdiff",
         description="Streaming harmonic noise filter + ID timeline anchoring + causal archive diff.",
     )
-    parser.add_argument("input", nargs="?", default="-", help="JSONL or raw log file (default: stdin)")
+    parser.add_argument("input", nargs="?", default="-", help="JSONL or raw log file, or 'serve'")
+    parser.add_argument("port", nargs="?", type=int, default=8787, help="Port when running 'tmdiff serve 8787'")
     parser.add_argument("--mode", choices=["auto", "squeeze", "causal"], default="auto")
     parser.add_argument("--pack", help="Optional path to write round-trip verified .utf8.json envelope")
     parser.add_argument("--links", type=int, default=8, help="Number of symmetric causal links to show")
     args = parser.parse_args()
+
+    if args.input == "serve":
+        run_server(port=args.port)
+        return
 
     fh = sys.stdin if args.input == "-" else open(args.input, "r", encoding="utf-8")
     raw_lines = [line.rstrip("\r\n") for line in fh if line.strip()]
