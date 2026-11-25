@@ -42,7 +42,10 @@ def decode_id(platform: str, raw_id: str | int) -> datetime:
             usec = int(s[11:17])
             return datetime.fromtimestamp(sec + usec / 1_000_000, tz=timezone.utc)
         if "." in s:
-            return datetime.fromtimestamp(float(s), tz=timezone.utc)
+            try:
+                return datetime.fromtimestamp(float(s), tz=timezone.utc)
+            except ValueError as exc:
+                raise UndecodableID(f"Invalid Slack ts: {s}") from exc
         raise UndecodableID(f"Slack ID lacks microsecond ts: {s}")
 
     if p in ("twitter", "x"):

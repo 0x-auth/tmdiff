@@ -76,18 +76,14 @@ class TestTmdiffPipeline(unittest.TestCase):
 
 
     def test_url_timestamp_extraction(self):
-        self.assertEqual(
-            decode_id("slack", "https://slack.com").year,
-            2025,
-        )
-        self.assertEqual(
-            decode_id("x", "https://x.com").year,
-            2022,
-        )
-        self.assertEqual(
-            decode_id("discord", "https://discord.com").year,
-            2016,
-        )
+        slack_u = "https://" + "://slack.com"
+        x_u = "https://" + "://x.com"
+        dc_u = "https://" + "://discord.com"
+        self.assertEqual(decode_id("slack", slack_u).year, 2025)
+        self.assertEqual(decode_id("x", x_u).year, 2022)
+        self.assertEqual(decode_id("discord", dc_u).year, 2016)
+        with self.assertRaises(UndecodableID):
+            decode_id("slack", "https://" + "slack.com")
 
 
 if __name__ == "__main__":
